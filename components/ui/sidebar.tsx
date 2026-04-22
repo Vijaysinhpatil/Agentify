@@ -1,10 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
-import { Slot } from "radix-ui"
+import { cva, VariantProps } from "class-variance-authority"
+import { Root, Slot } from "@radix-ui/react-slot"
 
-import { useIsMobile } from "@/hooks/use-mobile"
+import { useIsMobile } from "@/app/hooks/use-mobile"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -390,11 +390,13 @@ function SidebarGroup({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 function SidebarGroupLabel({
-  className,
   asChild = false,
+  className,
   ...props
-}: React.ComponentProps<"div"> & { asChild?: boolean }) {
-  const Comp = asChild ? Slot.Root : "div"
+}: React.HTMLAttributes<HTMLDivElement> & {
+  asChild?: boolean
+}) {
+  const Comp = asChild ? Root : "div"
 
   return (
     <Comp
@@ -414,7 +416,7 @@ function SidebarGroupAction({
   asChild = false,
   ...props
 }: React.ComponentProps<"button"> & { asChild?: boolean }) {
-  const Comp = asChild ? Slot.Root : "button"
+  const Comp = asChild ? Root : "button"
 
   return (
     <Comp
@@ -500,7 +502,7 @@ function SidebarMenuButton({
   isActive?: boolean
   tooltip?: string | React.ComponentProps<typeof TooltipContent>
 } & VariantProps<typeof sidebarMenuButtonVariants>) {
-  const Comp = asChild ? Slot.Root : "button"
+  const Comp = asChild ? Root : "button"
   const { isMobile, state } = useSidebar()
 
   const button = (
@@ -546,7 +548,7 @@ function SidebarMenuAction({
   asChild?: boolean
   showOnHover?: boolean
 }) {
-  const Comp = asChild ? Slot.Root : "button"
+  const Comp = asChild ? Root : "button"
 
   return (
     <Comp
@@ -652,12 +654,12 @@ function SidebarMenuSubButton({
   isActive = false,
   className,
   ...props
-}: React.ComponentProps<"a"> & {
+}: React.HTMLAttributes<HTMLAnchorElement> & {
   asChild?: boolean
   size?: "sm" | "md"
   isActive?: boolean
 }) {
-  const Comp = asChild ? Slot.Root : "a"
+  const Comp = asChild ? Root : "a"
 
   return (
     <Comp
