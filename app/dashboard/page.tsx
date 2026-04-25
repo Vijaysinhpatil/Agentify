@@ -1,9 +1,12 @@
 import React from "react";
+import CreateAgentSection from "./_components/createAgentSection";
+import AiAgentsTab from "./_components/AiAgentsTab";
 
 function Dashboard() {
      return (
          <div>
-              <h1>DashBoard Layout</h1>
+              <CreateAgentSection/>
+              <AiAgentsTab/>
          </div>
      )
 }
