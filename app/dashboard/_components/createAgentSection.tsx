@@ -44,7 +44,7 @@ function CreateAgentSection() {
   return (
     <div className="relative group max-w-4xl mx-auto mt-12 overflow-hidden border-4 border-slate-200 bg-white p-12 text-center rounded-2xl transition-all duration-300">
       {/* Subtle Background Accent */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-slate-50 via-transparent to-transparent opacity-50" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,var(--tw-gradient-stops))] from-slate-50 via-transparent to-transparent opacity-50" />
       
       <div className="relative flex flex-col items-center space-y-6">
         {/* Icon Cluster */}
