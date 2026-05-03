@@ -9,4 +9,11 @@ export default defineSchema({
     subscription : v.optional(v.string()),
     token : v.number(),
   }),
+  agentTable : defineTable({
+    agentId : v.string(),
+    name : v.string(),
+    published : v.boolean(),
+    config : v.optional(v.string()),
+    userId : v.id('users')
+  })
 });

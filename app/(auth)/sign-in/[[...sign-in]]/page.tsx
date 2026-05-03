@@ -85,7 +85,7 @@ export default function Page() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 font-poppins bg-[#F3F3F1]">
       <div className="w-full max-w-[400px]">
-        <SignIn appearance={appearance} />
+        <SignIn appearance={appearance} fallbackRedirectUrl="/dashboard" signUpUrl="/sign-up" />
       </div>
     </div>
   )
