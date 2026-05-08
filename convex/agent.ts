@@ -34,3 +34,35 @@ export const getUserAgents = query({
         return result
     }
 })
+
+// get agent by id
+
+export const GetAgentById = query({
+    args : {
+        agentId : v.string()
+    } ,
+    handler : async(ctx , args) => {
+        const result = await ctx.db.query('agentTable')
+        .filter(q => q.eq(q.field('agentId') , args.agentId))
+        .order('desc')
+        .collect()
+
+        return result;
+    }
+})
+
+
+// 1. Change 'query' to 'mutation'
+export const updateAgentDetails = mutation({
+    args: {
+        id: v.id('agentTable'),
+        nodes: v.any(),
+        edges: v.any()
+    },
+    handler: async (ctx, args) => {
+        await ctx.db.patch(args.id, {
+            nodes: args.nodes,
+            edges: args.edges
+        });
+    }
+});

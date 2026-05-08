@@ -1,8 +1,14 @@
 import { Button } from "@/components/ui/button";
+import { Agent } from "@/types/AgentTypes";
 import { ChevronLeft, Code2, Play, Globe } from "lucide-react";
 import React from "react";
 
-function Header() {
+
+type Props = {
+  agentDetails : Agent | undefined,
+
+}
+function Header({ agentDetails } : Props ) {
   return (
     <header className="sticky top-0 z-50 w-full border-5 border-zinc-200/60 bg-[#fcfcfc]/80 backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-screen-2xl items-center justify-between px-4 sm:px-8">
@@ -15,7 +21,7 @@ function Header() {
           
           <div className="flex flex-col gap-0.5">
             <h2 className="text-sm font-semibold tracking-tight text-zinc-800">
-              Agent Name
+             { agentDetails?.name}
             </h2>
             <div className="flex items-center gap-2">
               <span className="flex h-1.5 w-1.5 rounded-full bg-amber-400 ring-2 ring-amber-100" />

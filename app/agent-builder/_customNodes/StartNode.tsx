@@ -1,12 +1,13 @@
-import React from "react";
+import React, { memo } from "react";
 import { Handle, Position } from "@xyflow/react";
 import { PlayIcon } from "lucide-react";
 
-function StartNode({ data }: any) {
+// Wrapped in memo to prevent unnecessary re-renders in the flow
+const StartNode = memo(({ data }: any) => {
   return (
     <div className="group relative bg-white border-3 border-zinc-200 rounded-2xl shadow-[0_1px_2px_rgba(0,0,0,0.02),0_4px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] hover:border-zinc-300 transition-all duration-300 ease-out w-[180px] overflow-hidden">
       
-      {/* Visual Accent Bar - Using a softer emerald for a premium feel */}
+      {/* Visual Accent Bar */}
       <div className="absolute top-0 left-0 right-0 h-[3px] bg-emerald-500/90" />
 
       <div className="p-4 flex flex-col gap-3">
@@ -27,17 +28,20 @@ function StartNode({ data }: any) {
         </div>
       </div>
 
-      {/* Output Handle - Re-styled for light mode depth */}
+      {/* Output Handle */}
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!w-2.5 !h-2.5 !bg-emerald-500 !border-[3px] !border-white !shadow-sm hover:!scale-150 !transition-transform !duration-200"
+        // Tailwind '!' is used to override default React Flow styles
+        className="!w-3 !h-3 !bg-emerald-500 !border-2 !border-white !shadow-sm hover:!scale-125 !transition-transform"
       />
       
-      {/* Subtle bottom highlight for added dimension */}
+      {/* Subtle bottom highlight */}
       <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-zinc-100 to-transparent" />
     </div>
   );
-}
+});
+
+StartNode.displayName = "StartNode";
 
 export default StartNode;

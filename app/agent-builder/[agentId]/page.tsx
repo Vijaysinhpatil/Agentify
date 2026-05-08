@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useState, useMemo, useEffect } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
   ReactFlow,
   applyNodeChanges,
@@ -15,6 +15,7 @@ import {
   OnEdgesChange,
   OnConnect,
   Connection,
+  Panel,
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
@@ -22,95 +23,143 @@ import "@xyflow/react/dist/style.css";
 import Header from "../_components/Header";
 import StartNode from "../_customNodes/StartNode";
 import AgentNode from "../_customNodes/AgentNode";
-
-// Static data defined outside to maintain reference stability
-const initialNodes: Node[] = [
-  {
-    id: "n1",
-    type: "StartNode",
-    position: { x: 250, y: 150 },
-    data: { label: "New Lead" },
-  },
-  {
-    id: "n2",
-    type: "AgentNode",
-    position: { x: 250, y: 350 },
-    data: { label: "Send Email" },
-  },
-];
-
-const initialEdges: Edge[] = [
-  {
-    id: "n1-n2",
-    source: "n1",
-    target: "n2",
-    animated: true,
-    style: { stroke: "#cbd5e1", strokeWidth: 2 },
-  },
-];
+import AgentToolsPanel from "../_components/AgentToolsPanel";
+import { WorkflowContext } from "@/app/context/WorkflowContext";
+import { useConvex, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useParams } from "next/navigation";
+import { Agent } from "@/types/AgentTypes";
+import { updateAgentDetails } from "@/convex/agent";
+import { Button } from "@/components/ui/button";
+import { Save } from "lucide-react";
 
 export default function AgentBuilder() {
-  const [nodes, setNodes] = useState<Node[]>(initialNodes);
-  const [edges, setEdges] = useState<Edge[]>(initialEdges);
+  const workflow = useContext(WorkflowContext);
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [agentDetails, setAgentDetails] = useState<Agent>();
+  const UpdateAgentDetail = useMutation(api.agent.updateAgentDetails)
+  const convex = useConvex();
+  const { agentId } = useParams();
 
-  // Handle mounting to prevent hydration mismatches with system themes
+  useEffect(() => {
+    GetAgentDetails();
+  }, [agentId]); // Added agentId to dependency array
+
+  const GetAgentDetails = async () => {
+    const result = await convex.query(api.agent.GetAgentById, {
+      agentId: agentId as string,
+    });
+
+    /**
+     * FIX 1: Convex .collect() returns an Array. 
+     * We need to set the single object to match the 'Agent' type.
+     */
+    if (result && Array.isArray(result)) {
+      setAgentDetails(result[0]);
+    } else {
+      setAgentDetails(result);
+    }
+  };
+
+  /**
+   * FIX 2: Consistency in naming. 
+   * Ensure keys match exactly what is sent from AgentToolsPanel (AgentNode).
+   */
+  const nodeTypes = useMemo(
+    () => ({
+      StartNode: StartNode, // Changed from startNode to match tool logic
+      AgentNode: AgentNode,
+    }),
+    []
+  );
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const nodeTypes = useMemo(() => ({
-    StartNode: StartNode,
-    AgentNode: AgentNode,
-  }), []);
+  /**
+   * FIX 3: Styling logic alignment.
+   * This ensures that when you click a tool, ReactFlow knows which component to render.
+   */
+  useEffect(() => {
+    if (workflow?.addedNodes && Array.isArray(workflow.addedNodes)) {
+      const styledNodes = workflow.addedNodes.map((node: any) => ({
+        ...node,
+        // Map any lowercase variants or ID-based types to the correct Node Component key
+        type: (node.type === 'startNode' || node.id === 'start') ? 'StartNode' : node.type,
+      }));
+      setNodes(styledNodes);
+    }
+  }, [workflow?.addedNodes]);
 
-  const onNodesChange: OnNodesChange = useCallback(
-    (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
-    []
-  );
+  // save the nodes and edges
 
-  const onEdgesChange: OnEdgesChange = useCallback(
-    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
-    []
-  );
+// Save the nodes and edges whenever they change
+  // useEffect(() => {
+  //   // Check if agentDetails exists and if there are actually nodes to save
+  //   if (agentDetails?._id && nodes.length > 0) {
+  //     SaveNodesAndEdges();
+  //   }
+  // }, [nodes, edges, agentDetails?._id]);
 
-  const onConnect: OnConnect = useCallback(
-    (params: Connection) =>
-      setEdges((eds) =>
-        addEdge(
-          { 
-            ...params, 
-            animated: true, 
-            style: { stroke: "#cbd5e1", strokeWidth: 2 } 
-          }, 
-          eds
-        )
-      ),
-    []
-  );
+  const SaveNodesAndEdges = async () => {
+  try {
+    if (!agentDetails?._id) return;
 
-  // Premium Skeleton/Loading State
-  if (!mounted) {
-    return (
-      <div className="flex flex-col h-screen bg-[#f8fafc]">
-        <Header />
-        <div className="flex-1 p-6">
-          <div className="w-full h-full bg-white/50 border border-zinc-200/60 rounded-[32px] overflow-hidden relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-zinc-100/30 to-transparent animate-[pulse_3s_infinite]" />
-          </div>
-        </div>
-      </div>
-    );
+    // Sanitize nodes to remove React-internal properties ($$typeof)
+    const sanitizedNodes = nodes.map(({ id, type, position, data }) => ({
+      id,
+      type,
+      position,
+      data: {
+        label: data.label,
+        bgColor: data.bgColor,
+        // include any other plain data fields you need
+      },
+    }));
+
+    // Sanitize edges
+    const sanitizedEdges = edges.map(({ id, source, target, animated }) => ({
+      id,
+      source,
+      target,
+      animated,
+    }));
+
+    const result = await UpdateAgentDetail({
+      id: agentDetails._id,
+      edges: sanitizedEdges,
+      nodes: sanitizedNodes,
+    });
+
+    console.log("Saved successfully", result);
+    
+  } catch (error) {
+    console.error("Error saving workflow:", error);
   }
+};
+
+  const onNodesChange: OnNodesChange = useCallback((changes) => {
+    setNodes((nds) => applyNodeChanges(changes, nds));
+  }, []);
+
+  const onEdgesChange: OnEdgesChange = useCallback((changes) => {
+    setEdges((eds) => applyEdgeChanges(changes, eds));
+  }, []);
+
+  const onConnect: OnConnect = useCallback((params: Connection) => {
+    setEdges((eds) => addEdge({ ...params, animated: true }, eds));
+  }, []);
+
+  if (!mounted) return null;
 
   return (
-    <div className="flex flex-col h-screen bg-[#f8fafc] overflow-hidden text-slate-900 selection:bg-blue-100/50">
-      <Header />
-
-      <main className="flex-1 relative w-full h-full p-4 lg:p-6">
-        {/* Canvas Wrapper with Apple-like depth and curves */}
-        <div className="relative w-full h-full bg-white rounded-[32px] border-5 border-slate-200/80 shadow-[0_1px_2px_rgba(0,0,0,0.02),0_8px_16px_-4px_rgba(0,0,0,0.04)] overflow-hidden">
-          
+    <div className="flex flex-col h-screen bg-[#f9fafb]">
+      <Header agentDetails = {agentDetails} />
+      <main className="flex-1 relative p-4 lg:p-6">
+        <div className="relative w-full h-full bg-white rounded-[32px] border-4 border-slate-200/70 overflow-hidden">
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -119,38 +168,20 @@ export default function AgentBuilder() {
             onConnect={onConnect}
             nodeTypes={nodeTypes}
             fitView
-            colorMode="light"
-            snapToGrid={true}
-            snapGrid={[20, 20]}
-            defaultEdgeOptions={{
-              style: { strokeWidth: 2, stroke: '#cbd5e1' },
-              animated: true,
-              deletable: true,
-            }}
           >
-            {/* Soft, minimal background pattern */}
-            <Background
-              variant={BackgroundVariant.Dots}
-              gap={24}
-              size={1}
-              color="#e2e8f0"
-              className="opacity-60"
-            />
-            
-            {/* Re-styled floating controls */}
-            <Controls
-              showInteractive={false}
-              className="!bg-white/80 !backdrop-blur-md !border-slate-200/60 !rounded-2xl !shadow-2xl !shadow-slate-200/50 !m-6 !border !flex !gap-1 !p-1.5"
-            />
+            <Background variant={BackgroundVariant.Lines} color="#f1f5f9" />
+            <Controls />
+            <Panel position="top-left">
+              <AgentToolsPanel />
+            </Panel>
+            <Panel position="bottom-center">
+              <Button
+                onClick={SaveNodesAndEdges}
+              >
+                 <Save/>Save
+              </Button>
+            </Panel>
           </ReactFlow>
-
-          {/* Gradient vignettes for "infinite" depth feel */}
-          <div className="absolute inset-0 pointer-events-none rounded-[32px] ring-1 ring-inset ring-slate-900/5 shadow-[inset_0_2px_10px_rgba(0,0,0,0.01)]" />
-          
-          {/* Subtle decorative glass bar for status or Breadcrumbs if needed */}
-          <div className="absolute top-6 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-full text-[11px] font-medium text-slate-500 shadow-sm pointer-events-none">
-             Workflow Designer • Auto-saved
-          </div>
         </div>
       </main>
     </div>
