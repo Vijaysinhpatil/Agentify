@@ -36,7 +36,7 @@ const AgentTools = [
     icon: ThumbsUp,
     bgColor: 'bg-purple-50 text-purple-600 border-purple-100',
     id: 'approval',
-    type: 'ApprovalNode',
+    type: 'UserApprovalNode',
   },
   {
     name: 'API',
