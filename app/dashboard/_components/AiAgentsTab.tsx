@@ -4,7 +4,7 @@ import MyAgents from "./MyAgents";
 
 function AiAgentsTab() {
   return (
-    <div className="px-6 md:px-24 lg:px-32 mt-14 mb-10">
+    <div className="mt-14 mb-10 px-6 md:px-24 lg:px-32">
       <div className="mb-8">
         <h2 className="text-3xl font-bold text-slate-800 tracking-tight">
           AI Workspace
@@ -14,18 +14,21 @@ function AiAgentsTab() {
         </p>
       </div>
 
-      <Tabs defaultValue="myagents" className="w-full max-w-4xl flex flex-col">
+      <Tabs defaultValue="myagents" className="flex w-full max-w-5xl flex-col">
         <TabsList>
           <TabsTrigger value="myagents">My Agents</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="myagents" className="mt-4 rounded-xl border-4 p-5">
+        <TabsContent
+          value="myagents"
+          className="mt-5 overflow-hidden rounded-[28px] border border-zinc-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,244,245,0.92))] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_18px_40px_rgba(15,23,42,0.06)] ring-1 ring-white/70"
+        >
           <MyAgents />
         </TabsContent>
 
-        <TabsContent value="templates">
-          <div className="rounded-xl border-4 bg-white p-5 shadow-sm">
+        <TabsContent value="templates" className="mt-5">
+          <div className="rounded-[28px] border border-zinc-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,244,245,0.92))] p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_18px_40px_rgba(15,23,42,0.06)] ring-1 ring-white/70">
             <h1 className="text-lg font-semibold text-slate-800">
               Templates
             </h1>

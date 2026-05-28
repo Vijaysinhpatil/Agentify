@@ -6,11 +6,24 @@ import { GitBranch } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const IfElseNode = memo(({ data, id }: any) => {
+type IfElseNodeData = {
+  ifValue?: string;
+  elseLabel?: string;
+  onChange?: (id: string, name: string, value: string) => void;
+};
+
+type IfElseNodeProps = {
+  data?: IfElseNodeData;
+  id: string;
+};
+
+const IfElseNode = memo(({ data, id }: IfElseNodeProps) => {
+  const nodeData = data ?? {};
+
   const onChange = useCallback(
     (evt: React.ChangeEvent<HTMLInputElement>) => {
       const { name, value } = evt.target;
-      if (data.onChange) {
+      if (data?.onChange) {
         data.onChange(id, name, value);
       }
     },
@@ -54,7 +67,7 @@ const IfElseNode = memo(({ data, id }: any) => {
             name="ifValue"
             placeholder="e.g. status === 'success'"
             className="nodrag h-9 rounded-xl border-zinc-200 bg-zinc-50/50 text-xs focus-visible:ring-amber-500"
-            defaultValue={data.ifValue}
+            defaultValue={nodeData.ifValue ?? ""}
             onChange={onChange}
           />
         </div>
@@ -68,7 +81,7 @@ const IfElseNode = memo(({ data, id }: any) => {
             name="elseLabel"
             placeholder="Go to default..."
             className="nodrag h-9 rounded-xl border-zinc-200 bg-zinc-50/50 text-xs focus-visible:ring-amber-500"
-            defaultValue={data.elseLabel}
+            defaultValue={nodeData.elseLabel ?? ""}
             onChange={onChange}
           />
         </div>

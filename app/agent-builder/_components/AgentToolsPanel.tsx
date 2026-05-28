@@ -1,6 +1,6 @@
-import { WorkflowContext } from "@/app/context/WorkflowContext";
+import { Node } from "@xyflow/react";
 import { Merge, MousePointer, Repeat, Square, ThumbsUp, Webhook } from "lucide-react";
-import React, { useContext } from "react";
+import React, { useRef } from "react";
 
 const AgentTools = [
   {
@@ -47,22 +47,27 @@ const AgentTools = [
   },
 ];
 
-function AgentToolsPanel() {
-  const { setAddedNodes } = useContext(WorkflowContext);
+type AgentToolsPanelProps = {
+  setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
+};
 
-  const onAgentToolClick = (tool: any) => {
-    const newNode = {
-      id: `${tool.id}-${Date.now()}`,
+function AgentToolsPanel({ setNodes }: AgentToolsPanelProps) {
+  const nodeCounterRef = useRef(0);
+
+  const onAgentToolClick = (tool: (typeof AgentTools)[number]) => {
+    nodeCounterRef.current += 1;
+
+    const newNode: Node = {
+      id: `${tool.id}-${nodeCounterRef.current}`,
       position: { x: 0, y: 100 },
-      // FIXED: Only store plain data strings, not the Icon component
-      data: { 
+      data: {
         label: tool.name,
         bgColor: tool.bgColor,
-        id: tool.id
+        id: tool.id,
       },
-      type: tool.type 
+      type: tool.type,
     };
-    setAddedNodes((prev: any) => [...prev, newNode]);
+    setNodes((prev) => [...prev, newNode]);
   };
 
   return (

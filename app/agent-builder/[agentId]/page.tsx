@@ -35,6 +35,8 @@ import IfElseNode from "../_customNodes/IfElseNode";
 import WhileNode from "../_customNodes/WhileNode";
 import UserApprovalNode from "../_customNodes/UserApprovelNode";
 import AgentToolsPanel from "../_components/AgentToolsPanel";
+import ApiNode from "../_customNodes/ApiNode";
+import SettingPanel from "../_components/SettingPanel";
 
 import { WorkflowContext } from "@/app/context/WorkflowContext";
 import { useConvex, useMutation } from "convex/react";
@@ -46,10 +48,11 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Save, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import ApiNode from "../_customNodes/ApiNode";
 
 export default function AgentBuilder() {
   const workflow = useContext(WorkflowContext);
+
+  const { selectedNode, setSelectedNode } = workflow;
 
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -60,6 +63,17 @@ export default function AgentBuilder() {
   const UpdateAgentDetail = useMutation(api.agent.updateAgentDetails);
   const convex = useConvex();
   const { agentId } = useParams();
+  const defaultStartNode: Node[] = useMemo(
+    () => [
+      {
+        id: "start",
+        position: { x: 0, y: 0 },
+        data: { label: "Start" },
+        type: "StartNode",
+      },
+    ],
+    []
+  );
 
   const nodeTypes = useMemo(
     () => ({
@@ -104,7 +118,7 @@ export default function AgentBuilder() {
     return type;
   };
 
-  const GetAgentDetails = async () => {
+  const GetAgentDetails = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -122,6 +136,8 @@ export default function AgentBuilder() {
         }));
 
         setNodes(fixedNodes);
+      } else {
+        setNodes(defaultStartNode);
       }
 
       if (agent?.edges && Array.isArray(agent.edges)) {
@@ -133,7 +149,7 @@ export default function AgentBuilder() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [agentId, convex, defaultStartNode]);
 
   useEffect(() => {
     setMounted(true);
@@ -141,18 +157,7 @@ export default function AgentBuilder() {
     if (agentId) {
       GetAgentDetails();
     }
-  }, [agentId]);
-
-  useEffect(() => {
-    if (workflow?.addedNodes && Array.isArray(workflow.addedNodes)) {
-      const styledNodes = workflow.addedNodes.map((node: any) => ({
-        ...node,
-        type: normalizeNodeType(node.type, node.id),
-      }));
-
-      setNodes(styledNodes);
-    }
-  }, [workflow?.addedNodes]);
+  }, [agentId, GetAgentDetails]);
 
   const SaveNodesAndEdges = async () => {
     try {
@@ -224,6 +229,14 @@ export default function AgentBuilder() {
     );
   }, []);
 
+  const onNodeClick = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      setSelectedNode(node);
+      console.log("Selected Node:", node);
+    },
+    [setSelectedNode]
+  );
+
   if (!mounted || loading) {
     return (
       <div className="flex h-screen flex-col bg-[#f8fafc]">
@@ -264,6 +277,7 @@ export default function AgentBuilder() {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onNodeClick={onNodeClick}
             nodeTypes={nodeTypes}
             fitView
           >
@@ -286,7 +300,15 @@ export default function AgentBuilder() {
             <Controls />
 
             <Panel position="top-left">
-              <AgentToolsPanel />
+              <AgentToolsPanel setNodes={setNodes} />
+            </Panel>
+
+            <Panel position="top-right" >
+              <SettingPanel
+                selectedNode={selectedNode}
+                setSelectedNode={setSelectedNode}
+                setNodes={setNodes}
+              />
             </Panel>
 
             <Panel position="bottom-center">

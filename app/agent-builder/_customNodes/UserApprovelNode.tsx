@@ -5,7 +5,18 @@ import { Handle, Position } from "@xyflow/react";
 import { UserCheck, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const UserApprovalNode = memo(({ data, id }: any) => {
+type UserApprovalNodeData = {
+  label?: string;
+  message?: string;
+  onAction?: (id: string, actionType: "approve" | "reject") => void;
+};
+
+type UserApprovalNodeProps = {
+  data?: UserApprovalNodeData;
+  id: string;
+};
+
+const UserApprovalNode = memo(({ data, id }: UserApprovalNodeProps) => {
   const onAction = useCallback(
     (actionType: "approve" | "reject") => {
       if (data?.onAction) {
@@ -35,7 +46,7 @@ const UserApprovalNode = memo(({ data, id }: any) => {
             Human-in-the-loop
           </span>
           <h2 className="text-[14px] font-bold tracking-tight text-zinc-900">
-            User Approval
+            {data?.label || "User Approval"}
           </h2>
         </div>
       </div>
