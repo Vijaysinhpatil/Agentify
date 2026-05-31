@@ -141,6 +141,7 @@ function SettingPanel({
     url: string;
     method: string;
     authType: string;
+    apiKey: string;
     useHeaders: boolean;
     headers: string;
     body: string;
@@ -155,6 +156,7 @@ function SettingPanel({
         url: formData.url,
         method: formData.method,
         authType: formData.authType,
+        apiKey: formData.apiKey,
         useHeaders: formData.useHeaders,
         headers: formData.headers,
         body: formData.body,

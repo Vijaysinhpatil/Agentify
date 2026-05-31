@@ -1,14 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Agent } from "@/types/AgentTypes";
-import { ChevronLeft, Code2, Play, Globe } from "lucide-react";
+import { ChevronLeft, Code2, Play, Globe, X } from "lucide-react";
+import Link from "next/link";
 import React from "react";
 
 
 type Props = {
   agentDetails : Agent | undefined,
+  previewHeader ?: boolean
 
 }
-function Header({ agentDetails } : Props ) {
+function Header({ agentDetails, previewHeader = false } : Props ) {
   return (
     <header className="sticky top-0 z-50 w-full border-5 border-zinc-200/60 bg-[#fcfcfc]/80 backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-screen-2xl items-center justify-between px-4 sm:px-8">
@@ -45,13 +47,31 @@ function Header({ agentDetails } : Props ) {
           <div className="hidden h-3 w-px bg-zinc-200 md:block" />
 
           {/* Preview Button with Refined Light Aesthetics */}
-          <Button 
-            variant="outline" 
-            className="group/btn h-8 gap-2 rounded-lg border-zinc-200 bg-white px-4 text-xs font-medium text-zinc-600 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-all hover:bg-zinc-50 hover:border-zinc-300 hover:text-zinc-900 active:scale-[0.98]"
+
+         { !previewHeader ? <Link
+           href={`/agent-builder/${agentDetails?.agentId}/preview`}
           >
-            <Play className="h-3 w-3 fill-zinc-300 text-zinc-300 transition-colors group-hover/btn:fill-zinc-600 group-hover/btn:text-zinc-600" />
-            Preview
-          </Button>
+                  <Button 
+                    variant="outline" 
+                    className="group/btn h-8 gap-2 rounded-lg border-zinc-200 bg-white px-4 text-xs font-medium text-zinc-600 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-all hover:bg-zinc-50 hover:border-zinc-300 hover:text-zinc-900 active:scale-[0.98]"
+                  >
+                    <Play className="h-3 w-3 fill-zinc-300 text-zinc-300 transition-colors group-hover/btn:fill-zinc-600 group-hover/btn:text-zinc-600" />
+                    Preview
+                  </Button>
+          </Link> :
+           <Link
+            href={`/agent-builder/${agentDetails?.agentId}`}
+            >
+                  <Button 
+                    variant="outline" 
+                    className="group/btn h-8 gap-2 rounded-lg border-zinc-200 bg-white px-4 text-xs font-medium text-zinc-600 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-all hover:bg-zinc-50 hover:border-zinc-300 hover:text-zinc-900 active:scale-[0.98]"
+                  >
+                    <X className="h-3 w-3 fill-zinc-300 text-zinc-300 transition-colors group-hover/btn:fill-zinc-600 group-hover/btn:text-zinc-600" />
+                    Close Preview
+                  </Button>
+          </Link>
+          }
+        
 
           {/* Publish Button: Zinc-900 for high-contrast primary action */}
           <Button 

@@ -19,5 +19,6 @@ export default defineSchema({
     // ADD THESE TWO LINES:
     nodes: v.optional(v.any()),
     edges: v.optional(v.any()),
+    agentToolConfig : v.optional(v.any())
   })
 });

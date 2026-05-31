@@ -10,4 +10,5 @@ export type Agent = {
     agentId: string;
     published: boolean;
     userId: Id<"users">;
+    agentToolConfig?: any;
 }

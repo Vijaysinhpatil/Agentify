@@ -20,6 +20,7 @@ type ApiSettingsFormData = {
   url: string;
   method: string;
   authType: string;
+  apiKey: string;
   useHeaders: boolean;
   headers: string;
   body: string;
@@ -32,6 +33,7 @@ type ApiSettingsProps = {
       url?: string;
       method?: string;
       authType?: string;
+      apiKey?: string;
       useHeaders?: boolean;
       headers?: string;
       body?: string;
@@ -46,6 +48,7 @@ const defaultFormData: ApiSettingsFormData = {
   url: "",
   method: "GET",
   authType: "none",
+  apiKey: "",
   useHeaders: true,
   headers: "",
   body: "",
@@ -79,6 +82,11 @@ function ApiSettings({
 
     if (!formData.url.trim()) {
       toast.error("API URL is required.");
+      return;
+    }
+
+    if (formData.authType === "apiKey" && !formData.apiKey.trim()) {
+      toast.error("API key is required for API Key auth.");
       return;
     }
 
@@ -154,6 +162,19 @@ function ApiSettings({
             </SelectContent>
           </Select>
         </div>
+
+        {formData.authType === "apiKey" && (
+          <div className="space-y-1.5">
+            <Label className="text-xs font-bold text-zinc-700">API Key</Label>
+            <Input
+              type="password"
+              value={formData.apiKey}
+              onChange={(event) => handleChange("apiKey", event.target.value)}
+              placeholder="Enter API key"
+              className="h-9 rounded-xl border-zinc-200 bg-zinc-50/70 px-3 text-xs shadow-none transition-all placeholder:text-zinc-400 hover:bg-white focus-visible:border-zinc-300 focus-visible:ring-4 focus-visible:ring-zinc-200/70"
+            />
+          </div>
+        )}
 
         <div className="flex items-center justify-between rounded-xl border border-zinc-200 bg-zinc-50/70 p-3 transition-all hover:bg-white hover:shadow-sm">
           <div>

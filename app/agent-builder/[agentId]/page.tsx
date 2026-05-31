@@ -28,15 +28,9 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import Header from "../_components/Header";
-import StartNode from "../_customNodes/StartNode";
-import AgentNode from "../_customNodes/AgentNode";
-import EndNode from "../_customNodes/EndNode";
-import IfElseNode from "../_customNodes/IfElseNode";
-import WhileNode from "../_customNodes/WhileNode";
-import UserApprovalNode from "../_customNodes/UserApprovelNode";
 import AgentToolsPanel from "../_components/AgentToolsPanel";
-import ApiNode from "../_customNodes/ApiNode";
 import SettingPanel from "../_components/SettingPanel";
+import { nodeTypes } from "../_customNodes/nodeTypes";
 
 import { WorkflowContext } from "@/app/context/WorkflowContext";
 import { useConvex, useMutation } from "convex/react";
@@ -72,26 +66,6 @@ export default function AgentBuilder() {
         type: "StartNode",
       },
     ],
-    []
-  );
-
-  const nodeTypes = useMemo(
-    () => ({
-      StartNode,
-      AgentNode,
-      EndNode,
-      IfElseNode,
-      WhileNode,
-      UserApprovalNode,
-      ApprovalNode: UserApprovalNode,
-      userApprovalNode: UserApprovalNode,
-      UserApproval: UserApprovalNode,
-      userApproval: UserApprovalNode,
-      userApprovelNode: UserApprovalNode,
-      UserApprovelNode: UserApprovalNode,
-      ApiNode,
-      apiNode: ApiNode,
-    }),
     []
   );
 
