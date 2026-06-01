@@ -20,5 +20,10 @@ export default defineSchema({
     nodes: v.optional(v.any()),
     edges: v.optional(v.any()),
     agentToolConfig : v.optional(v.any())
+  }),
+  ConversationTable : defineTable({
+    conversationId : v.string(),
+    agentId : v.id('agentTable'),
+    userId : v.id('users'),
   })
 });

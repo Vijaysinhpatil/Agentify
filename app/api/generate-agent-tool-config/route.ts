@@ -5,11 +5,15 @@ type FlowRequest = {
   jsonConfig?: unknown;
 };
 
+type NodeSettings = Record<string, unknown>;
+
 type AgentConfig = {
   id: string;
   name: string;
   includeHistory: boolean;
   output: {
+    format?: string;
+    schema?: string;
     tools: string[];
     instruction: string[];
   };
@@ -33,6 +37,19 @@ type ParsedAgentToolConfig = {
   primaryAgentName: string;
   agents: AgentConfig[];
   tools: ToolConfig[];
+};
+
+type FlowNode = {
+  id: string;
+  type: string;
+  label: string;
+  settings?: NodeSettings;
+  next?: unknown;
+};
+
+type FlowConfigInput = {
+  startNode?: string | null;
+  flow?: FlowNode[];
 };
 
 function extractJsonBlock(rawText: string) {
@@ -85,6 +102,8 @@ function normalizeAgentToolConfig(input: unknown): ParsedAgentToolConfig {
             : `Agent ${index + 1}`,
         includeHistory: Boolean(record.includeHistory),
         output: {
+          format: typeof output.format === "string" ? output.format : "text",
+          schema: typeof output.schema === "string" ? output.schema : "",
           tools: Array.isArray(output.tools)
             ? output.tools.filter(
                 (toolId): toolId is string => typeof toolId === "string"
@@ -137,6 +156,111 @@ function normalizeAgentToolConfig(input: unknown): ParsedAgentToolConfig {
   };
 }
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object"
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function asString(value: unknown) {
+  return typeof value === "string" ? value : "";
+}
+
+function asBoolean(value: unknown) {
+  return Boolean(value);
+}
+
+function instructionsToSteps(instructions: string) {
+  return instructions
+    .split(/\r?\n/)
+    .map((step) => step.trim())
+    .filter(Boolean);
+}
+
+function inferToolParametersFromUrl(url: string) {
+  if (!url.trim()) {
+    return {};
+  }
+
+  try {
+    const parsedUrl = new URL(url);
+    return Object.fromEntries(
+      Array.from(parsedUrl.searchParams.keys()).map((key) => [key, "string"])
+    );
+  } catch {
+    return {};
+  }
+}
+
+function buildAgentToolConfigFromFlow(flowConfig: unknown): ParsedAgentToolConfig {
+  const config = asRecord(flowConfig) as FlowConfigInput;
+  const flow = Array.isArray(config.flow) ? config.flow : [];
+  const nodes = flow.map((node) => ({
+    ...node,
+    settings: asRecord(node.settings),
+  }));
+
+  const agentNodes = nodes.filter((node) => node.type === "AgentNode");
+  const apiNodes = nodes.filter((node) => node.type === "ApiNode");
+
+  const tools: ToolConfig[] = apiNodes.map((node, index) => {
+    const settings = asRecord(node.settings);
+    const url = asString(settings.url);
+    const method = asString(settings.method).trim().toUpperCase() || "GET";
+    const authType = asString(settings.authType).trim();
+    const apiKey = asString(settings.apiKey);
+    const headers = asString(settings.headers);
+    const body = asString(settings.body);
+
+    const parameters: Record<string, string> = {
+      ...inferToolParametersFromUrl(url),
+    };
+
+    if (headers.trim()) {
+      parameters.headers = "string";
+    }
+
+    if (body.trim()) {
+      parameters.body = "string";
+    }
+
+    return {
+      id: node.id || `tool-${index + 1}`,
+      name: asString(settings.name).trim() || node.label || `Tool ${index + 1}`,
+      description: asString(settings.description).trim(),
+      method,
+      url,
+      includeApiKey: authType === "apiKey" && apiKey.trim().length > 0,
+      apiKey,
+      parameters,
+      usage: [],
+      assignedAgent: agentNodes[0]?.id ?? "",
+    };
+  });
+
+  const agents: AgentConfig[] = agentNodes.map((node, index) => {
+    const settings = asRecord(node.settings);
+    return {
+      id: node.id || `agent-${index + 1}`,
+      name: asString(settings.name).trim() || node.label || `Agent ${index + 1}`,
+      includeHistory: asBoolean(settings.includeChatHistory),
+      output: {
+        format: asString(settings.output).trim() || "text",
+        schema: asString(settings.schema),
+        tools: tools.map((tool) => tool.id),
+        instruction: instructionsToSteps(asString(settings.instructions)),
+      },
+    };
+  });
+
+  return {
+    systemPrompt: "",
+    primaryAgentName: agents[0]?.name ?? "",
+    agents,
+    tools,
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as FlowRequest;
@@ -153,82 +277,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const prompt = `
-You are given a workflow JSON for an agent builder.
-
-Convert it into a JSON object with exactly this top-level shape:
-{
-  "systemPrompt": "",
-  "primaryAgentName": "",
-  "agents": [
-    {
-      "id": "agent-id",
-      "name": "",
-      "includeHistory": true,
-      "output": {
-        "tools": ["tool-id-1"],
-        "instruction": ["step 1", "step 2"]
-      }
-    }
-  ],
-  "tools": [
-    {
-      "id": "tool-id",
-      "name": "",
-      "description": "",
-      "method": "GET",
-      "url": "",
-      "includeApiKey": false,
-      "apiKey": "",
-      "parameters": {
-        "key": "string"
-      },
-      "usage": ["step 1"],
-      "assignedAgent": "agent-id"
-    }
-  ]
-}
-
-Rules:
-- Return valid JSON only.
-- "agents" must always be an array.
-- "tools" must always be an array.
-- "output.tools" must always be an array of strings.
-- "output.instruction" must always be an array of strings.
-- If a value is unknown, use an empty string, false, or an empty array.
-- Base the answer only on this workflow config.
-
-Workflow config:
-${JSON.stringify(flowConfig, null, 2)}
-`;
-
-    // Replaced Gemini API call with OpenRouter Completions API
-    const response = await openRouter.chat.completions.create({
-      model: "liquid/lfm-2.5-1.2b-instruct:free",
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      response_format: { type: "json_object" }, // Enforces a structural JSON response matching your rules
-    });
-
-    const rawText = response.choices[0]?.message?.content?.trim();
-
-    if (!rawText) {
-      return NextResponse.json(
-        {
-          error: "No response from OpenRouter model",
-        },
-        {
-          status: 502,
-        }
-      );
-    }
-
-    const parsedConfig = JSON.parse(extractJsonBlock(rawText));
-    const normalizedConfig = normalizeAgentToolConfig(parsedConfig);
+    const deterministicConfig = buildAgentToolConfigFromFlow(flowConfig);
+    const normalizedConfig = normalizeAgentToolConfig(deterministicConfig);
 
     return NextResponse.json(normalizedConfig);
   } catch (error: any) {

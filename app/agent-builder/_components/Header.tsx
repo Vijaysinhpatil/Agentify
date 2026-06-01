@@ -8,9 +8,17 @@ import React from "react";
 type Props = {
   agentDetails : Agent | undefined,
   previewHeader ?: boolean
-
+  onToggleCode?: () => void;
+  showCode?: boolean;
+  onPublish?: () => void
 }
-function Header({ agentDetails, previewHeader = false } : Props ) {
+function Header({
+  agentDetails,
+  previewHeader = false,
+  onToggleCode,
+  showCode = false,
+  onPublish
+} : Props ) {
   return (
     <header className="sticky top-0 z-50 w-full border-5 border-zinc-200/60 bg-[#fcfcfc]/80 backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-screen-2xl items-center justify-between px-4 sm:px-8">
@@ -36,12 +44,15 @@ function Header({ agentDetails, previewHeader = false } : Props ) {
 
         {/* Right Section: Core Actions */}
         <div className="flex items-center gap-3">
-          <Button 
-            variant="ghost" 
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onToggleCode}
+            disabled={!onToggleCode}
             className="hidden h-8 items-center gap-2 rounded-lg px-2.5 text-xs font-medium text-zinc-500 transition-all hover:bg-zinc-100 hover:text-zinc-900 md:flex"
           >
             <Code2 className="h-3.5 w-3.5 text-zinc-400" />
-            Code
+            {showCode ? "Preview" : "Code"}
           </Button>
 
           <div className="hidden h-3 w-px bg-zinc-200 md:block" />
@@ -76,6 +87,8 @@ function Header({ agentDetails, previewHeader = false } : Props ) {
           {/* Publish Button: Zinc-900 for high-contrast primary action */}
           <Button 
             className="h-8 gap-2 rounded-lg bg-zinc-900 px-4 text-xs font-medium text-zinc-50 shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all hover:bg-zinc-800 hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)] active:scale-[0.98]"
+            onClick = {onPublish}
+            disabled={!onPublish}
           >
             <Globe className="h-3 w-3" />
             Publish

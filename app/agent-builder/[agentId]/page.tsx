@@ -29,6 +29,7 @@ import "@xyflow/react/dist/style.css";
 
 import Header from "../_components/Header";
 import AgentToolsPanel from "../_components/AgentToolsPanel";
+import PublishCodeDialogue from "../_components/PublishCodeDialogue";
 import SettingPanel from "../_components/SettingPanel";
 import { nodeTypes } from "../_customNodes/nodeTypes";
 
@@ -53,6 +54,7 @@ export default function AgentBuilder() {
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [agentDetails, setAgentDetails] = useState<Agent>();
+  const [openPublishDialog, setOpenPublishDialog] = useState(false);
 
   const UpdateAgentDetail = useMutation(api.agent.updateAgentDetails);
   const convex = useConvex();
@@ -239,9 +241,20 @@ export default function AgentBuilder() {
     );
   }
 
+  const onPublish = () => {
+    setOpenPublishDialog(true);
+  }
   return (
     <div className="flex h-screen flex-col bg-[#f8fafc]">
-      <Header agentDetails={agentDetails} />
+      <PublishCodeDialogue
+        open={openPublishDialog}
+        onOpenChange={setOpenPublishDialog}
+        agentDetails={agentDetails}
+      />
+      <Header 
+      agentDetails={agentDetails}
+      onPublish={onPublish}
+      />
 
       <main className="relative flex-1 p-4 lg:p-6">
         <div className="relative h-full w-full overflow-hidden rounded-[32px] border-4 border-slate-200/70 bg-slate-50 shadow-sm">

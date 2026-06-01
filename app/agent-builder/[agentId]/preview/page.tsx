@@ -10,10 +10,8 @@ import {
 } from "@xyflow/react";
 import axios from "axios";
 import { useConvex, useMutation } from "convex/react";
-import { RefreshCwOffIcon } from "lucide-react";
 import { useParams } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
 import { Agent } from "@/types/AgentTypes";
 
@@ -21,10 +19,13 @@ import Header from "../../_components/Header";
 import { nodeTypes } from "../../_customNodes/nodeTypes";
 
 import "@xyflow/react/dist/style.css";
+import ChatUi from "./_components/ChatUi";
+import CodeView from "./_components/CodeView";
 
 type AgentNodeData = {
   label?: string;
   settings?: Record<string, unknown>;
+  setting?: Record<string, unknown>;
 };
 
 type WorkflowNext =
@@ -55,6 +56,7 @@ function PreviewAgent() {
   const [agentDetail, setAgentDetail] = useState<Agent | undefined>();
   const [flowConfig, setFlowConfig] = useState<WorkflowConfig | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showCode, setShowCode] = useState(false);
   const updateAgentToolConfig = useMutation(api.agent.updateAgentToolConfig);
 
   const getAgentDetails = useCallback(async () => {
@@ -98,13 +100,22 @@ function PreviewAgent() {
     const flow = nodes.map((node): WorkflowNodeConfig => {
       const connectedEdges = edgeMap[node.id] ?? [];
       const nodeType = node.type ?? "UnknownNode";
+      const nodeSettings =
+        node.data?.setting && typeof node.data.setting === "object"
+          ? node.data.setting
+          : node.data?.settings && typeof node.data.settings === "object"
+            ? node.data.settings
+            : {};
       let next: WorkflowNext = null;
 
       switch (nodeType) {
         case "IfElseNode": {
-          const ifEdge = connectedEdges.find((edge) => edge.sourceHandle === "if");
+          const ifEdge = connectedEdges.find(
+            (edge) => edge.sourceHandle === "true" || edge.sourceHandle === "if"
+          );
           const elseEdge = connectedEdges.find(
-            (edge) => edge.sourceHandle === "else"
+            (edge) =>
+              edge.sourceHandle === "false" || edge.sourceHandle === "else"
           );
 
           next = {
@@ -136,7 +147,7 @@ function PreviewAgent() {
         id: node.id,
         type: nodeType,
         label: node.data?.label ?? nodeType,
-        settings: node.data?.settings ?? {},
+        settings: nodeSettings,
         next,
       };
     });
@@ -198,10 +209,25 @@ function PreviewAgent() {
   const previewEdges = Array.isArray(agentDetail?.edges)
     ? (agentDetail.edges as Edge[])
     : [];
+  const hasGeneratedAgentToolConfig =
+    Boolean(agentDetail?.agentToolConfig) &&
+    Array.isArray(agentDetail?.agentToolConfig?.agents) &&
+    agentDetail.agentToolConfig.agents.length > 0;
+  const codePreview = JSON.stringify(
+    agentDetail?.agentToolConfig ?? flowConfig ?? {},
+    null,
+    2
+  );
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-zinc-50 font-sans text-zinc-900">
-      <Header previewHeader={true} agentDetails={agentDetail} />
+      <Header
+        previewHeader={true}
+        agentDetails={agentDetail}
+        onToggleCode={() => setShowCode((current) => !current)}
+        showCode={showCode}
+      
+      />
 
       <div className="flex flex-1 gap-4 overflow-hidden p-4">
         <div className="relative flex flex-1 flex-col overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-sm">
@@ -276,7 +302,7 @@ function PreviewAgent() {
             <>
               <div className="flex items-center justify-between border-b border-zinc-100 bg-zinc-50/50 p-4">
                 <h3 className="text-sm font-semibold tracking-tight text-zinc-700">
-                  Test Agent
+                  {showCode ? "Agent Code" : agentDetail?.name}
                 </h3>
                 <span className="rounded bg-zinc-100 px-2 py-0.5 font-mono text-[10px] font-medium text-zinc-500">
                   v1.0
@@ -284,28 +310,16 @@ function PreviewAgent() {
               </div>
 
               <div className="flex flex-1 flex-col justify-end p-4">
-                <div className="m-2 flex flex-1 items-center justify-center rounded-lg border border-dashed border-zinc-200 bg-zinc-50/50 text-xs font-medium text-zinc-400">
-                  CHAT UI PLACEHOLDER
-                </div>
-
-                <div className="mt-2 p-2">
-                  <div className="flex h-10 w-full select-none items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-xs text-zinc-400">
-                    Type a message to test...
-                  </div>
-                  <div>
-                    {agentDetail && !agentDetail.agentToolConfig && (
-                      <Button
-                        onClick={generateAgentToolConfig}
-                        disabled={loading || !flowConfig}
-                      >
-                        <RefreshCwOffIcon
-                          className={loading ? "animate-spin" : ""}
-                        />
-                        Reboot Agent
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                {showCode ? (
+                  <CodeView code={codePreview} />
+                ) : (
+                  <ChatUi
+                    generateAgentToolConfig={generateAgentToolConfig}
+                    hasAgentToolConfig={hasGeneratedAgentToolConfig}
+                    loading={loading || !flowConfig}
+                    agentDetail={agentDetail}
+                  />
+                )}
               </div>
             </>
           )}
