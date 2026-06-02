@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useContext } from "react"
+import { useCallback, useContext, useEffect } from "react"
 import {
   Sidebar,
   SidebarContent,
@@ -15,36 +15,90 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { UserButton } from "@clerk/nextjs"
+import { useAuth, UserButton } from "@clerk/nextjs"
 import {
+  BarChart3,
   Database,
   Gem,
   Headphones,
   LayoutDashboard,
   User,
   WalletCards,
-  Plus,
   Zap,
-  ArrowLeft // Added for the Back to Home option
+  ArrowLeft
 } from "lucide-react"
 import Link from "next/link"
 import { UserDetailContext } from "@/app/context/userDetailContext"
 import { Button } from "@/components/ui/button"
 import { usePathname } from "next/navigation"
+import { useConvex } from "convex/react"
+import { api } from "@/convex/_generated/api"
 
-export function AppSidebar() {
+type Props = {
+  isAdmin?: boolean;
+};
+
+export function AppSidebar({ isAdmin = false }: Props) {
   const { state } = useSidebar()
   const isOpen = state === "expanded"
-  const { userDetails } = useContext(UserDetailContext)
+  const { userDetails , setUserDetails } = useContext(UserDetailContext)
   const path = usePathname()
+  const { has } =  useAuth();
+  const isPaidUser = has({plan : "unlimited_plan"})
+
+  const convex = useConvex();
+  const [ totalRemainingTokens , setTotalRemainingTokens ] = React.useState(0)
+
+  const GetUserAgent = useCallback(async () => {
+    if (!userDetails?._id) {
+      return;
+    }
+
+    const result = await convex.query(api.agent.getUserAgents, {
+          userId : userDetails?._id
+    })
+
+    const nextRemainingCredits = 2 - Number(result?.length || 0);
+    setTotalRemainingTokens(nextRemainingCredits)
+    setUserDetails((prev : any) => {
+      if (!prev || prev.remainingCredits === nextRemainingCredits) {
+        return prev;
+      }
+
+      return { ...prev, remainingCredits: nextRemainingCredits };
+    })
+  }, [convex, setUserDetails, userDetails?._id])
+
+  useEffect(() => {
+    if (!userDetails?._id) {
+      return;
+    }
+
+    if (isPaidUser) {
+      setTotalRemainingTokens(0);
+      return;
+    }
+
+    void GetUserAgent();
+  }, [GetUserAgent, isPaidUser, userDetails?._id])
+
+
 
   const MenuOptions = [
     { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-    { title: "AI Agent", url: "/agents", icon: Headphones },
-    { title: "Pricing", url: "/pricing", icon: WalletCards },
-    { title: "Data", url: "/data", icon: Database },
-    { title: "Profile", url: "/profile", icon: User }
+    { title: "AI Agent", url: "/dashboard/my-agents", icon: Headphones },
+    { title: "Pricing", url: "/dashboard/pricing", icon: WalletCards },
+    { title: "Data", url: "/dashboard/data", icon: Database },
+    { title: "Profile", url: "/dashboard/profile", icon: User }
   ]
+
+  if (isAdmin) {
+    MenuOptions.splice(1, 0, {
+      title: "Admin",
+      url: "/dashboard/admin",
+      icon: BarChart3,
+    })
+  }
 
   return (
     <Sidebar collapsible="icon" className="border-r border-zinc-200 bg-white">
@@ -214,7 +268,7 @@ export function AppSidebar() {
                       Balance
                     </p>
                     <p className="text-sm font-bold text-zinc-900">
-                      {userDetails?.token ?? 0}
+                      {totalRemainingTokens ?? 0}/2
                       <span className="text-[10px] text-zinc-400 ml-1">
                         USD
                       </span>
@@ -227,14 +281,18 @@ export function AppSidebar() {
 
           {/* UPGRADE */}
           <SidebarMenuItem>
-            {isOpen ? (
-              <Button className="w-full bg-zinc-950 hover:bg-zinc-800 text-white rounded-xl py-6 font-bold">
-                Upgrade Pro
-              </Button>
-            ) : (
-              <div className="size-10 bg-zinc-950 rounded-full ml-0.5 flex items-center justify-center">
-                <Plus className="text-white size-5" />
+            {isOpen && isPaidUser? (
+             <div className="ml-0.5 flex items-center justify-center font-bold text-sm bg-zinc-950 text-white px-4 py-3 rounded-xl  ">
+                {/* <Plus className="text-white size-5" /> */}
+                <h2>You can create unlimited agents</h2>
               </div>
+            ) : (
+               <Link
+                href="/dashboard/pricing"
+                className="ml-0.5 flex items-center justify-center font-bold text-sm bg-zinc-950 text-white px-4 py-3 rounded-xl  "
+              >
+                Upgrade Pro
+              </Link>
             )}
           </SidebarMenuItem>
 

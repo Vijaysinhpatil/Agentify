@@ -280,7 +280,7 @@ export default function Home() {
                   Dashboard
                 </Link>
                 <Link
-                  href="/dashboard/agents"
+                  href="/dashboard/my-agents"
                   className="hover:text-zinc-900 transition-colors"
                 >
                   Agents

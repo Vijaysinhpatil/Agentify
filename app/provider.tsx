@@ -2,7 +2,7 @@
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { UserDetailContext } from "./context/userDetailContext";
 import { WorkflowContext } from "./context/WorkflowContext";
 import { Edge, Node, ReactFlowProvider } from "@xyflow/react";
@@ -19,22 +19,26 @@ export default function Provider ({
     const [ addedNodes , setAddedNodes ] = useState<Node[]>([])
 
     const [ nodeEdge , setNodeedges ] = useState<Edge[]>([]);
+    const initializedEmailRef = useRef<string | null>(null);
 
     const CreateAndGetUser = useCallback(async() => {
-          if(user){
+          const email = user?.primaryEmailAddress?.emailAddress ?? "";
+
+          if(user && email){
               const result = await createUser({
                 name : user?.fullName ?? "",
-                email : user.primaryEmailAddress?.emailAddress ?? "",
+                email,
               })
 
-               console.log(result);
-            //   save to Context
+            initializedEmailRef.current = email;
             setUserDetails(result);
           }
     }, [createUser, user])
 
     useEffect(() => {
-        if (user) {
+        const email = user?.primaryEmailAddress?.emailAddress ?? "";
+
+        if (email && initializedEmailRef.current !== email) {
           void CreateAndGetUser();
         }
     } , [CreateAndGetUser, user])

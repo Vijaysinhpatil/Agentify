@@ -26,9 +26,9 @@ export const getUserAgents = query({
     },
     handler : async(ctx , args) => {
         const result = await ctx.db.query('agentTable')
-        .filter(q => q.eq(q.field('userId') , args.userId ))
+        .withIndex("by_userId", q => q.eq("userId" , args.userId ))
         .order('desc')
-        .collect()
+        .take(100)
 
 
         return result
@@ -43,9 +43,8 @@ export const GetAgentById = query({
     } ,
     handler : async(ctx , args) => {
         const result = await ctx.db.query('agentTable')
-        .filter(q => q.eq(q.field('agentId') , args.agentId))
-        .order('desc')
-        .collect()
+        .withIndex("by_agentId", q => q.eq("agentId" , args.agentId))
+        .unique()
 
         return result;
     }

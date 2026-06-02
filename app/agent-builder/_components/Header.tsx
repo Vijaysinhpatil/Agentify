@@ -25,9 +25,11 @@ function Header({
         
         {/* Left Section: Contextual Navigation */}
         <div className="flex items-center gap-5">
-          <button className="group flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 active:scale-95">
-            <ChevronLeft className="h-4 w-4 text-zinc-500 transition-transform group-hover:-translate-x-0.5" />
+         <Link href="/dashboard">
+            <button className="group flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 active:scale-95">
+              <ChevronLeft className="h-4 w-4 text-zinc-500 transition-transform group-hover:-translate-x-0.5" />
           </button>
+         </Link>
           
           <div className="flex flex-col gap-0.5">
             <h2 className="text-sm font-semibold tracking-tight text-zinc-800">

@@ -1,16 +1,19 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import DashboardProvider from "./Provider";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppSidebar } from "./_components/AppSideBar";
 import { Toaster } from "sonner";
+import { getCurrentUserAdminState } from "@/lib/admin";
 
-function DashboardLayout({ children }: any) {
+async function DashboardLayout({ children }: { children: ReactNode }) {
+  const { isAdmin } = await getCurrentUserAdminState();
+
   return (
     <div>
       <SidebarProvider>
         <TooltipProvider>
-          <AppSidebar />
+          <AppSidebar isAdmin={isAdmin} />
 
           <DashboardProvider>
             {children}
